@@ -1,0 +1,13 @@
+const limits = {
+    EMBED_TITLE: 256,
+    EMBED_DESCRIPTION: 2048,
+    EMBED_FIELDS: 25,
+    FIELD_NAME: 256,
+    FIELD_VALUE: 1024,
+    FOOTER_TEXT: 2048,
+    AUTHOR_NAME: 256,
+    TOTAL_EMBED_CHARS: 6000,
+    MAX_EMBEDS: 10,
+};
+
+export default limits;
