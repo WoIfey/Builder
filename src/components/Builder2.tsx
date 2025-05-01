@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, Suspense } from 'react'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
@@ -86,6 +86,14 @@ const defaultEmbed: Embed = {
 }
 
 export default function BuilderPage() {
+	return (
+		<Suspense>
+			<BuilderContent />
+		</Suspense>
+	)
+}
+
+function BuilderContent() {
 	const router = useRouter()
 	const searchParams = useSearchParams()
 	const [isLoading, setIsLoading] = useState(true)
@@ -225,8 +233,8 @@ export default function BuilderPage() {
 
 	return (
 		<div className="min-h-screen flex flex-col">
-			<div className="lg:hidden flex flex-col">
-				<Tabs defaultValue="builder" className="flex-1 flex flex-col">
+			<div className="lg:hidden flex flex-col h-[100dvh]">
+				<Tabs defaultValue="builder" className="flex-1 gap-0 flex flex-col">
 					<TabsList className="w-full h-auto rounded-none border-b border-border p-0 sticky top-0 z-10 bg-background">
 						<TabsTrigger
 							value="builder"
@@ -241,7 +249,7 @@ export default function BuilderPage() {
 							Preview
 						</TabsTrigger>
 					</TabsList>
-					<TabsContent value="builder">
+					<TabsContent value="builder" className="flex-1 h-[calc(100dvh-3rem)]">
 						<BuilderCard
 							webhookUrl={webhookUrl}
 							setWebhookUrl={setWebhookUrl}
@@ -257,27 +265,95 @@ export default function BuilderPage() {
 							isUpdating={isUpdating}
 						/>
 					</TabsContent>
-					<TabsContent value="preview">
+					<TabsContent value="preview" className="flex-1 h-[calc(100dvh-3rem)]">
 						<PreviewCard embedData={embedData} onLoadFromClipboard={setEmbedData} />
 					</TabsContent>
 				</Tabs>
 			</div>
-			<div className="hidden lg:flex w-full h-[calc(100vh-48px)]">
-				<BuilderCard
-					webhookUrl={webhookUrl}
-					setWebhookUrl={setWebhookUrl}
-					messageId={messageId}
-					setMessageId={setMessageId}
-					embedData={embedData}
-					updateMetadata={updateMetadata}
-					addEmbed={addEmbed}
-					updateEmbed={updateEmbed}
-					removeEmbed={removeEmbed}
-					calculateEmbedCharCount={calculateEmbedCharCount}
-					isLoading={isLoading}
-					isUpdating={isUpdating}
-				/>
-				<PreviewCard embedData={embedData} onLoadFromClipboard={setEmbedData} />
+
+			<div className="hidden lg:flex w-full h-[100vh]">
+				<Card className="flex-1 h-full order-2 lg:order-1 border-0 shadow-none rounded-none relative flex flex-col">
+					{isLoading && (
+						<div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
+							<Loader2 className="animate-spin size-16 text-primary" />
+						</div>
+					)}
+					{isUpdating && (
+						<div className="absolute top-8 left-1/2 transform -translate-x-1/2 z-50">
+							<div className="flex items-center gap-2 text-sm">
+								<Loader2 className="animate-spin size-4 text-primary" /> Saving...
+							</div>
+						</div>
+					)}
+					<CardHeader className="pb-2 shrink-0">
+						<CardTitle className="flex justify-between items-center">
+							<p>Embed Builder</p>
+							<Theme />
+						</CardTitle>
+					</CardHeader>
+					<CardContent className="flex-1 overflow-hidden">
+						<ScrollArea className="h-full px-2">
+							<div className="space-y-6">
+								<WebhookInput
+									webhookUrl={webhookUrl}
+									setWebhookUrl={setWebhookUrl}
+									messageId={messageId}
+									setMessageId={setMessageId}
+									embedData={embedData}
+								/>
+
+								<BotSettings
+									username={embedData.username}
+									avatarUrl={embedData.avatar_url}
+									onUsernameChange={value => updateMetadata('username', value)}
+									onAvatarUrlChange={value => updateMetadata('avatar_url', value)}
+								/>
+
+								<MessageContent
+									content={embedData.content}
+									onChange={value => updateMetadata('content', value)}
+								/>
+
+								<Separator />
+
+								<div className="space-y-2">
+									<div className="flex items-center justify-between">
+										<h3 className="text-sm font-medium">Embeds</h3>
+										<Button
+											variant="outline"
+											size="sm"
+											onClick={addEmbed}
+											className="h-7"
+										>
+											Add Embed
+										</Button>
+									</div>
+								</div>
+
+								{embedData.embeds.map((embed, embedIndex) => (
+									<EmbedEditor
+										key={embedIndex}
+										embed={embed}
+										index={embedIndex}
+										onUpdate={(key, value) => updateEmbed(embedIndex, key, value)}
+										onRemove={() => removeEmbed(embedIndex)}
+										calculateEmbedCharCount={calculateEmbedCharCount}
+									/>
+								))}
+							</div>
+						</ScrollArea>
+					</CardContent>
+				</Card>
+				<Card className="flex-1 h-full order-1 lg:order-2 border-0 shadow-none rounded-none flex flex-col">
+					<CardHeader className="shrink-0">
+						<CardTitle>Preview</CardTitle>
+					</CardHeader>
+					<CardContent className="flex-1 overflow-hidden">
+						<ScrollArea className="h-full">
+							<EmbedPreview embedData={embedData} onLoadFromClipboard={setEmbedData} />
+						</ScrollArea>
+					</CardContent>
+				</Card>
 			</div>
 		</div>
 	)
@@ -311,7 +387,7 @@ function BuilderCard({
 	isUpdating: boolean
 }) {
 	return (
-		<Card className="w-1/2 h-full order-2 lg:order-1 border-0 shadow-none rounded-none relative">
+		<Card className="flex-1 h-full order-2 lg:order-1 border-0 shadow-none rounded-none relative flex flex-col">
 			{isLoading && (
 				<div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
 					<Loader2 className="animate-spin size-16 text-primary" />
@@ -324,13 +400,13 @@ function BuilderCard({
 					</div>
 				</div>
 			)}
-			<CardHeader className="pb-2">
+			<CardHeader className="pb-2 shrink-0">
 				<CardTitle className="flex justify-between items-center">
 					<p>Embed Builder</p>
 					<Theme />
 				</CardTitle>
 			</CardHeader>
-			<CardContent className="h-[calc(100%-2rem)]">
+			<CardContent className="flex-1 overflow-hidden">
 				<ScrollArea className="h-full px-2">
 					<div className="space-y-6">
 						<WebhookInput
@@ -389,11 +465,11 @@ function PreviewCard({
 	onLoadFromClipboard: (data: EmbedData) => void
 }) {
 	return (
-		<Card className="w-1/2 h-full order-1 lg:order-2 border-0 shadow-none rounded-none">
-			<CardHeader>
+		<Card className="flex-1 h-full order-1 lg:order-2 border-0 shadow-none rounded-none flex flex-col">
+			<CardHeader className="shrink-0">
 				<CardTitle>Preview</CardTitle>
 			</CardHeader>
-			<CardContent className="h-[calc(100%-2rem)]">
+			<CardContent className="flex-1 overflow-hidden">
 				<ScrollArea className="h-full">
 					<EmbedPreview
 						embedData={embedData}

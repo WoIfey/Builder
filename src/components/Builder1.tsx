@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, Suspense } from 'react'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
@@ -86,6 +86,14 @@ const defaultEmbed: Embed = {
 }
 
 export default function BuilderPage() {
+	return (
+		<Suspense>
+			<BuilderContent />
+		</Suspense>
+	)
+}
+
+function BuilderContent() {
 	const router = useRouter()
 	const searchParams = useSearchParams()
 	const [isLoading, setIsLoading] = useState(true)
