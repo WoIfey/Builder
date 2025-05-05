@@ -157,14 +157,14 @@ export default function Builder() {
 		if (embedData.embeds[0]) {
 			const existingEmbed = embedData.embeds[0]
 			const presetType = Object.entries(presets).find(
-				([_, preset]) =>
+				([, preset]) =>
 					preset.username === embedData.username &&
 					preset.avatar_url === embedData.avatar_url &&
 					preset.embeds[0]?.author?.icon_url === existingEmbed.author?.icon_url
 			)
 
 			if (presetType) {
-				const [_, preset] = presetType
+				const [, preset] = presetType
 				if (preset.embeds[0]) {
 					Object.assign(newEmbed, { ...preset.embeds[0] })
 					if (newEmbed.timestamp) {
