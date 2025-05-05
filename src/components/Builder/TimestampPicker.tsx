@@ -40,10 +40,7 @@ export default function TimestampPicker({
 			<div className="flex gap-2">
 				<Popover>
 					<PopoverTrigger asChild>
-						<Button
-							variant="outline"
-							className="min-w-[200px] justify-start text-left font-normal"
-						>
+						<Button variant="outline" className="justify-start text-left font-normal">
 							{timestamp ? (
 								format(new Date(timestamp), 'PPP')
 							) : (

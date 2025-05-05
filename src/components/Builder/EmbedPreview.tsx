@@ -140,7 +140,9 @@ export default function EmbedPreview({
 							</div>
 							<div className="flex-grow min-w-0">
 								<div className="flex items-center gap-1 mb-1">
-									<div className="font-medium">{embedData.username}</div>
+									<div className="font-medium">
+										{embedData.username || 'Captain Hook'}
+									</div>
 									<div className="bg-[#6263ed] ml-0.5 mt-0.5 text-white rounded-[3px] px-[6px] font-semibold text-xs">
 										APP
 									</div>

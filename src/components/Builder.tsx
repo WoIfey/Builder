@@ -63,16 +63,9 @@ const debounce = <T extends (...args: any[]) => Promise<void> | void>(
 	return debounced
 }
 
-const defaultEmbedStructure: Embed = {
-	color: 0,
-	fields: [],
-	author: { name: '' },
-	footer: { text: '' },
-}
-
 const defaultEmbedData: EmbedData = {
 	...presets.default,
-	embeds: [defaultEmbedStructure],
+	embeds: [],
 }
 
 export default function Builder() {
@@ -153,7 +146,7 @@ export default function Builder() {
 		}
 		setEmbedData(prev => ({
 			...prev,
-			embeds: [...prev.embeds, { ...defaultEmbedStructure }],
+			embeds: [...prev.embeds],
 		}))
 	}
 
