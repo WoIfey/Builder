@@ -63,6 +63,13 @@ const debounce = <T extends (...args: any[]) => Promise<void> | void>(
 	return debounced
 }
 
+const defaultEmbedStructure: Embed = {
+	color: 0,
+	fields: [],
+	author: { name: '' },
+	footer: { text: '' },
+}
+
 const defaultEmbedData: EmbedData = {
 	...presets.default,
 	embeds: [],
@@ -144,9 +151,34 @@ export default function Builder() {
 			})
 			return
 		}
+
+		const newEmbed = { ...defaultEmbedStructure }
+
+		if (embedData.embeds[0]) {
+			const existingEmbed = embedData.embeds[0]
+			const presetType = Object.entries(presets).find(
+				([_, preset]) =>
+					preset.username === embedData.username &&
+					preset.avatar_url === embedData.avatar_url &&
+					preset.embeds[0]?.author?.icon_url === existingEmbed.author?.icon_url
+			)
+
+			if (presetType) {
+				const [_, preset] = presetType
+				if (preset.embeds[0]) {
+					Object.assign(newEmbed, { ...preset.embeds[0] })
+					if (newEmbed.timestamp) {
+						const now = new Date()
+						now.setHours(preset === presets.epicgames ? 18 : 0, 0, 0, 0)
+						newEmbed.timestamp = now.toISOString()
+					}
+				}
+			}
+		}
+
 		setEmbedData(prev => ({
 			...prev,
-			embeds: [...prev.embeds],
+			embeds: [...prev.embeds, newEmbed],
 		}))
 	}
 
@@ -268,7 +300,7 @@ export default function Builder() {
 					)}
 					<CardHeader>
 						<CardTitle className="flex justify-between items-center">
-							<p className="text-xl">Builder</p>
+							<p className="text-xl pl-2">Builder</p>
 							<div className="flex items-center gap-2">
 								{isUpdating && (
 									<div className="flex items-center justify-center gap-2 text-sm">
@@ -332,7 +364,7 @@ export default function Builder() {
 						</ScrollArea>
 					</CardContent>
 				</Card>
-				<Card className="lg:py-0 lg:pt-6 flex-1 h-full order-1 lg:order-2 border-0 shadow-none rounded-none flex flex-col">
+				<Card className="py-0 pt-6 gap-3 flex-1 h-full order-1 lg:order-2 border-0 shadow-none rounded-none flex flex-col">
 					<CardHeader className="shrink-0">
 						<CardTitle className="text-xl">Preview</CardTitle>
 					</CardHeader>
@@ -398,7 +430,7 @@ function BuilderCard({
 					</div>
 				</CardTitle>
 			</CardHeader>
-			<CardContent className="flex-1 overflow-hidden">
+			<CardContent className="flex-1 overflow-hidden px-4">
 				<ScrollArea className="h-full px-2">
 					<div className="space-y-6">
 						<WebhookInput
@@ -457,11 +489,8 @@ function PreviewCard({
 	onLoadFromClipboard: (data: EmbedData) => void
 }) {
 	return (
-		<Card className="flex-1 h-full order-1 lg:order-2 border-0 shadow-none rounded-none flex flex-col">
-			<CardHeader className="shrink-0">
-				<CardTitle className="text-xl">Preview</CardTitle>
-			</CardHeader>
-			<CardContent className="flex-1 overflow-hidden">
+		<Card className="gap-0 pt-0 pb-0 h-full order-1 lg:order-2 border-0 shadow-none rounded-none flex flex-col">
+			<CardContent className="overflow-hidden px-0">
 				<ScrollArea className="h-full">
 					<EmbedPreview
 						embedData={embedData}

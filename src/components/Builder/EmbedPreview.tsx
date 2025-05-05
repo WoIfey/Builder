@@ -62,8 +62,8 @@ export default function EmbedPreview({
 
 	return (
 		<div className="space-y-4">
-			<div className="flex flex-col gap-4">
-				<div className="grid grid-cols-1 2xl:grid-cols-3 gap-4">
+			<div className="flex flex-col">
+				<div className="grid grid-cols-1 2xl:grid-cols-3 gap-4 sticky top-0 dark:bg-[#1a1a1e] bg-[#fbfbfb] px-4 pt-4 rounded-t-md">
 					<div className="space-y-2">
 						<Label>Presets</Label>
 						<Select
@@ -126,7 +126,7 @@ export default function EmbedPreview({
 
 				{showDiscordPreview ? (
 					<div className="dark:bg-[#1a1a1e] bg-[#fbfbfb] rounded-md p-4 [overflow-wrap:anywhere] w-full">
-						<div className="flex flex-col md:flex-row gap-4">
+						<div className="flex gap-4 pb-2">
 							<div className="flex-shrink-0">
 								<div className="size-10 mt-1 flex items-center justify-center">
 									{embedData.avatar_url ? (
@@ -173,7 +173,7 @@ export default function EmbedPreview({
 								{embedData.embeds.map((embed: Embed, embedIndex: number) => (
 									<div
 										key={embedIndex}
-										className="flex rounded-l-[4px] overflow-hidden"
+										className="flex rounded-l-[4px] overflow-hidden mb-1"
 										style={{
 											borderLeft: `4px solid #${embed.color
 												.toString(16)
@@ -250,12 +250,10 @@ export default function EmbedPreview({
 						</div>
 					</div>
 				) : (
-					<div className="rounded-lg overflow-hidden border bg-card w-full">
-						<div className="bg-muted p-3 border-b">
-							<pre className="text-xs break-all whitespace-pre-wrap">
-								{JSON.stringify(embedData, null, 2)}
-							</pre>
-						</div>
+					<div className="p-3 dark:bg-[#1a1a1e] bg-[#fbfbfb] rounded-md mb-4 w-full">
+						<pre className="text-xs break-all whitespace-pre-wrap">
+							{JSON.stringify(embedData, null, 2)}
+						</pre>
 					</div>
 				)}
 			</div>

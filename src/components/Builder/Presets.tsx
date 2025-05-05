@@ -53,7 +53,7 @@ export const presets: Record<PresetOption, EmbedData> = {
 				footer: {
 					text: 'Offer ends',
 				},
-				timestamp: new Date().toISOString(),
+				timestamp: new Date(new Date().setHours(18, 0, 0, 0)).toISOString(),
 				image: {
 					url: '',
 				},
@@ -82,7 +82,7 @@ export const presets: Record<PresetOption, EmbedData> = {
 				footer: {
 					text: 'Offer ends',
 				},
-				timestamp: new Date().toISOString(),
+				timestamp: new Date(new Date().setHours(0, 0, 0, 0)).toISOString(),
 				image: {
 					url: '',
 				},
