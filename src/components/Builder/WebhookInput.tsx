@@ -19,14 +19,6 @@ import {
 	AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
 
-interface WebhookInputProps {
-	webhookUrl: string
-	setWebhookUrl: (url: string) => void
-	messageId: string
-	setMessageId: (id: string) => void
-	embedData: EmbedData
-}
-
 export default function WebhookInput({
 	webhookUrl,
 	setWebhookUrl,
@@ -152,23 +144,22 @@ export default function WebhookInput({
 							<AlertDialogContent>
 								<AlertDialogHeader>
 									<AlertDialogTitle>Warning</AlertDialogTitle>
-									<AlertDialogDescription className="space-y-2">
-										<p>
-											This will encrypt and save your webhook in your browsers local
-											storage and will automatically be in the URL input.
-										</p>
-										<p className="font-medium">
-											⚠️ This might not be secure. Consider manually pasting the webhook
-											instead.
-										</p>
+									<AlertDialogDescription className="space-y-2" asChild>
+										<div>
+											<p>
+												This will encrypt and save your webhook in your browsers local
+												storage and will automatically be in the URL input.
+											</p>
+											<p className="font-medium">
+												⚠️ This might not be secure. Consider manually pasting the webhook
+												instead.
+											</p>
+										</div>
 									</AlertDialogDescription>
 								</AlertDialogHeader>
 								<AlertDialogFooter>
-									<AlertDialogCancel className="w-full">Cancel</AlertDialogCancel>
-									<AlertDialogAction
-										className="dark:text-black w-full"
-										onClick={saveWebhookUrl}
-									>
+									<AlertDialogCancel>Cancel</AlertDialogCancel>
+									<AlertDialogAction onClick={saveWebhookUrl}>
 										Save Anyway
 									</AlertDialogAction>
 								</AlertDialogFooter>

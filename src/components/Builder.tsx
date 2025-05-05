@@ -1,22 +1,23 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo, Suspense } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import Theme from '@/components/Theme'
+import Theme from '@/components/ui/Theme'
 import { decrypt } from '@/lib/encryption'
-import WebhookInput from '@/components/Builder_v1/WebhookInput'
-import BotSettings from '@/components/Builder_v1/BotSettings'
-import MessageContent from '@/components/Builder_v1/MessageContent'
-import EmbedEditor from '@/components/Builder_v1/EmbedEditor'
-import EmbedPreview from '@/components/Builder_v1/EmbedPreview'
+import WebhookInput from '@/components/Builder/WebhookInput'
+import BotSettings from '@/components/Builder/BotSettings'
+import MessageContent from '@/components/Builder/MessageContent'
+import EmbedEditor from '@/components/Builder/EmbedEditor'
+import EmbedPreview from '@/components/Builder/EmbedPreview'
 import { toast } from 'sonner'
 import limits from '@/lib/limits'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
+import { presets } from '@/components/Builder/Presets'
 
 const encodeEmbedData = (data: EmbedData): string => {
 	return Buffer.from(JSON.stringify(data))
@@ -41,16 +42,16 @@ const decodeEmbedData = (base64: string): EmbedData | null => {
 	}
 }
 
-const debounce = <T extends (...args: any[]) => any>(
+const debounce = <T extends (...args: any[]) => Promise<void> | void>(
 	func: T,
 	wait: number
-): ((...args: Parameters<T>) => void) & { cancel: () => void } => {
+): T & { cancel: () => void } => {
 	let timeout: NodeJS.Timeout | null = null
 
-	const debounced = (...args: Parameters<T>) => {
+	const debounced = ((...args: Parameters<T>) => {
 		if (timeout) clearTimeout(timeout)
 		timeout = setTimeout(() => func(...args), wait)
-	}
+	}) as T & { cancel: () => void }
 
 	debounced.cancel = () => {
 		if (timeout) {
@@ -62,38 +63,19 @@ const debounce = <T extends (...args: any[]) => any>(
 	return debounced
 }
 
-const defaultEmbed: Embed = {
-	color: parseInt('#85ce4b'.replace('#', ''), 16),
-	fields: [
-		{
-			name: 'Game',
-			value: '~~€~~ **Free**\n[Claim Game]()',
-			inline: true,
-		},
-	],
-	author: {
-		name: 'Epic Games Store',
-		url: 'https://free.wolfey.me/',
-		icon_url: 'https://wolfey.s-ul.eu/YcyMXrI1',
-	},
-	footer: {
-		text: 'Offer ends',
-	},
-	timestamp: new Date().toISOString(),
-	image: {
-		url: '',
-	},
+const defaultEmbedStructure: Embed = {
+	color: 0,
+	fields: [],
+	author: { name: '' },
+	footer: { text: '' },
 }
 
-export default function BuilderPage() {
-	return (
-		<Suspense>
-			<BuilderContent />
-		</Suspense>
-	)
+const defaultEmbedData: EmbedData = {
+	...presets.default,
+	embeds: [defaultEmbedStructure],
 }
 
-function BuilderContent() {
+export default function Builder() {
 	const router = useRouter()
 	const searchParams = useSearchParams()
 	const [isLoading, setIsLoading] = useState(true)
@@ -102,15 +84,9 @@ function BuilderContent() {
 		const dataParam = searchParams.get('data')
 		if (dataParam) {
 			const decoded = decodeEmbedData(dataParam)
-			if (decoded) return decoded
+			if (decoded && decoded.embeds && decoded.embeds.length > 0) return decoded
 		}
-		return {
-			content: '<@&847939354978811924>',
-			embeds: [defaultEmbed],
-			username: 'Free Games',
-			avatar_url: 'https://wolfey.s-ul.eu/5nV1WPyv',
-			attachments: [],
-		}
+		return defaultEmbedData
 	})
 	const [webhookUrl, setWebhookUrl] = useState('')
 	const [messageId, setMessageId] = useState('')
@@ -160,9 +136,11 @@ function BuilderContent() {
 		let count = 0
 		if (embed.author?.name) count += embed.author.name.length
 		if (embed.footer?.text) count += embed.footer.text.length
-		embed.fields.forEach(field => {
-			count += (field.name?.length || 0) + (field.value?.length || 0)
-		})
+		if (embed.fields) {
+			embed.fields.forEach(field => {
+				count += (field.name?.length || 0) + (field.value?.length || 0)
+			})
+		}
 		return count
 	}
 
@@ -175,23 +153,40 @@ function BuilderContent() {
 		}
 		setEmbedData(prev => ({
 			...prev,
-			embeds: [...prev.embeds, { ...defaultEmbed }],
+			embeds: [...prev.embeds, { ...defaultEmbedStructure }],
 		}))
 	}
 
-	const updateEmbed = (embedIndex: number, key: keyof Embed, value: any) => {
+	const updateEmbed = <K extends keyof Embed>(
+		embedIndex: number,
+		key: K,
+		value: Embed[K]
+	) => {
 		const newEmbed = {
 			...embedData.embeds[embedIndex],
 			[key]: value,
 		}
-
-		if (key === 'author' && value.name?.length > limits.AUTHOR_NAME) {
+		if (
+			key === 'author' &&
+			typeof value === 'object' &&
+			value &&
+			'name' in value &&
+			typeof value.name === 'string' &&
+			value.name.length > limits.AUTHOR_NAME
+		) {
 			toast.error('Author name too long', {
 				description: 'Author names are limited to 256 characters.',
 			})
 			return
 		}
-		if (key === 'footer' && value.text?.length > limits.FOOTER_TEXT) {
+		if (
+			key === 'footer' &&
+			typeof value === 'object' &&
+			value &&
+			'text' in value &&
+			typeof value.text === 'string' &&
+			value.text.length > limits.FOOTER_TEXT
+		) {
 			toast.error('Footer text too long', {
 				description: 'Footer text is limited to 2048 characters.',
 			})
@@ -240,7 +235,7 @@ function BuilderContent() {
 							value="builder"
 							className="flex-1 relative rounded-none py-3 after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:after:bg-primary"
 						>
-							Builder {isUpdating && '•'}
+							Builder
 						</TabsTrigger>
 						<TabsTrigger
 							value="preview"
@@ -272,23 +267,23 @@ function BuilderContent() {
 			</div>
 
 			<div className="hidden lg:flex w-full h-[100vh]">
-				<Card className="flex-1 h-full order-2 lg:order-1 border-0 shadow-none rounded-none relative flex flex-col">
+				<Card className="py-4 gap-2 flex-1 h-full order-2 lg:order-1 border-0 shadow-none rounded-none relative flex flex-col">
 					{isLoading && (
 						<div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
 							<Loader2 className="animate-spin size-16 text-primary" />
 						</div>
 					)}
-					{isUpdating && (
-						<div className="absolute top-8 left-1/2 transform -translate-x-1/2 z-50">
-							<div className="flex items-center gap-2 text-sm">
-								<Loader2 className="animate-spin size-4 text-primary" /> Saving...
-							</div>
-						</div>
-					)}
-					<CardHeader className="pb-2 shrink-0">
+					<CardHeader>
 						<CardTitle className="flex justify-between items-center">
-							<p>Embed Builder</p>
-							<Theme />
+							<p className="text-xl">Builder</p>
+							<div className="flex items-center gap-2">
+								{isUpdating && (
+									<div className="flex items-center justify-center gap-2 text-sm">
+										<Loader2 className="animate-spin size-4 text-primary" /> Saving...
+									</div>
+								)}
+								<Theme />
+							</div>
 						</CardTitle>
 					</CardHeader>
 					<CardContent className="flex-1 overflow-hidden">
@@ -344,9 +339,9 @@ function BuilderContent() {
 						</ScrollArea>
 					</CardContent>
 				</Card>
-				<Card className="flex-1 h-full order-1 lg:order-2 border-0 shadow-none rounded-none flex flex-col">
+				<Card className="lg:py-0 lg:pt-6 flex-1 h-full order-1 lg:order-2 border-0 shadow-none rounded-none flex flex-col">
 					<CardHeader className="shrink-0">
-						<CardTitle>Preview</CardTitle>
+						<CardTitle className="text-xl">Preview</CardTitle>
 					</CardHeader>
 					<CardContent className="flex-1 overflow-hidden">
 						<ScrollArea className="h-full">
@@ -380,30 +375,34 @@ function BuilderCard({
 	embedData: EmbedData
 	updateMetadata: (key: keyof Omit<EmbedData, 'embeds'>, value: string) => void
 	addEmbed: () => void
-	updateEmbed: (index: number, key: keyof Embed, value: any) => void
+	updateEmbed: <K extends keyof Embed>(
+		index: number,
+		key: K,
+		value: Embed[K]
+	) => void
 	removeEmbed: (index: number) => void
 	calculateEmbedCharCount: (embed: Embed) => number
 	isLoading: boolean
 	isUpdating: boolean
 }) {
 	return (
-		<Card className="flex-1 h-full order-2 lg:order-1 border-0 shadow-none rounded-none relative flex flex-col">
+		<Card className="py-4 gap-2 flex-1 h-full order-2 lg:order-1 border-0 shadow-none rounded-none relative flex flex-col">
 			{isLoading && (
 				<div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
 					<Loader2 className="animate-spin size-16 text-primary" />
 				</div>
 			)}
-			{isUpdating && (
-				<div className="absolute top-8 left-1/2 transform -translate-x-1/2 z-50">
-					<div className="flex items-center gap-2 text-sm">
-						<Loader2 className="animate-spin size-4 text-primary" /> Saving...
-					</div>
-				</div>
-			)}
-			<CardHeader className="pb-2 shrink-0">
+			<CardHeader>
 				<CardTitle className="flex justify-between items-center">
-					<p>Embed Builder</p>
-					<Theme />
+					<p className="text-xl">Builder</p>
+					<div className="flex items-center gap-2">
+						{isUpdating && (
+							<div className="flex items-center justify-center gap-2 text-sm">
+								<Loader2 className="animate-spin size-4 text-primary" /> Saving...
+							</div>
+						)}
+						<Theme />
+					</div>
 				</CardTitle>
 			</CardHeader>
 			<CardContent className="flex-1 overflow-hidden">
@@ -467,7 +466,7 @@ function PreviewCard({
 	return (
 		<Card className="flex-1 h-full order-1 lg:order-2 border-0 shadow-none rounded-none flex flex-col">
 			<CardHeader className="shrink-0">
-				<CardTitle>Preview</CardTitle>
+				<CardTitle className="text-xl">Preview</CardTitle>
 			</CardHeader>
 			<CardContent className="flex-1 overflow-hidden">
 				<ScrollArea className="h-full">

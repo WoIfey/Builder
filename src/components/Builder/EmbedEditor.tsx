@@ -17,14 +17,6 @@ import EmbedFields from './EmbedFields'
 import { toast } from 'sonner'
 import limits from '@/lib/limits'
 
-interface EmbedEditorProps {
-	embed: Embed
-	index: number
-	onUpdate: (key: keyof Embed, value: any) => void
-	onRemove: () => void
-	calculateEmbedCharCount: (embed: Embed) => number
-}
-
 export default function EmbedEditor({
 	embed,
 	index,

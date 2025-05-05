@@ -8,13 +8,6 @@ import { Switch } from '../ui/switch'
 import { Trash2 } from 'lucide-react'
 import limits from '@/lib/limits'
 
-interface EmbedFieldsProps {
-	fields: Field[]
-	onAddField: () => void
-	onUpdateField: (index: number, field: Partial<Field>) => void
-	onRemoveField: (index: number) => void
-}
-
 export default function EmbedFields({
 	fields,
 	onAddField,

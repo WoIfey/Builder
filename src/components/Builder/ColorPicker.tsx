@@ -7,12 +7,6 @@ import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover'
 import { HexColorPicker } from 'react-colorful'
 import { Undo2 } from 'lucide-react'
 
-interface ColorPickerProps {
-	color: number
-	onChange: (color: number) => void
-	defaultColor?: string
-}
-
 export default function ColorPicker({
 	color,
 	onChange,
@@ -38,18 +32,14 @@ export default function ColorPicker({
 						/>
 					</PopoverTrigger>
 					<PopoverContent className="w-full p-3" align="start">
-						<HexColorPicker
-							color={hexColor}
-							onChange={handleColorChange}
-							className="!w-full mb-2"
-						/>
+						<HexColorPicker color={hexColor} onChange={handleColorChange} />
 						<Button
 							onClick={() => handleColorChange(defaultColor)}
 							variant="outline"
 							size="sm"
-							className="w-full px-8"
+							className="w-full px-8 mt-2"
 						>
-							<Undo2 className="size-4 mr-2" />
+							<Undo2 className="size-4" />
 							Reset to Default
 						</Button>
 					</PopoverContent>
